@@ -3,7 +3,7 @@ WORKDIR /app
 COPY webapi/ .
 RUN go build -o app .
 
-FROM aline:latest
+FROM alpine:latest
 WORKDIR /root/
 COPY --from=builder /app/app .
 EXPOSE 8081
