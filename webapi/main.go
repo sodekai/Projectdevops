@@ -19,10 +19,22 @@ func main() {
 
 func whoAmI(response http.ResponseWriter, r *http.Request) {
 	who := []whoami{
-		whoami{Name: "Efrei Paris",
-			Title: "DevOps and Continous Deployment",
-			State: "FR",
+		whoami{Name: "Clement LUC",
+			Title: "HOMME",
+			State: "CH",
 		},
+		whoami{Name: "Selim HADDIOUI",
+			Title: "AUTRES",
+			State: "MA",
+		},
+		whoami{Name: "MinhTri NGUYEN",
+			Title: "HOMME",
+			State: "VN",
+		},
+		whoami{Name: "Rayan MOUSSI",
+		Title: "HOMME",
+		State: "DZ",
+	},
 	}
 
 	json.NewEncoder(response).Encode(who)
