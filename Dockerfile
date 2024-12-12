@@ -1,6 +1,6 @@
 FROM golang:1.21.5 AS builder
 WORKDIR /app
-COPY webapi/
+COPY webapi/ .
 RUN go build -o app .
 
 FROM aline:latest
