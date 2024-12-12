@@ -7,4 +7,4 @@ FROM aline:latest
 WORKDIR /root/
 COPY --from=builder /app/app .
 EXPOSE 8081
-CMD["./app"]
+CMD ["./app"]
