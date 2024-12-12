@@ -20,20 +20,20 @@ func main() {
 func whoAmI(response http.ResponseWriter, r *http.Request) {
 	who := []whoami{
 		whoami{Name: "Clement LUC",
-			Title: "DevOps and Continous Deployment",
-			State: "FR",
+			Title: "HOMME",
+			State: "CH",
 		},
 		whoami{Name: "Selim HADDIOUI",
-			Title: "DevOps and Continous Deployment",
-			State: "FR",
+			Title: "AUTRES",
+			State: "MA",
 		},
 		whoami{Name: "MinhTri NGUYEN",
-			Title: "DevOps and Continous Deployment",
-			State: "FR",
+			Title: "HOMME",
+			State: "VN",
 		},
 		whoami{Name: "Rayan MOUSSI",
-		Title: "DevOps and Continous Deployment",
-		State: "FR",
+		Title: "HOMME",
+		State: "DZ",
 	},
 	}
 
