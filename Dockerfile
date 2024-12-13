@@ -1,10 +1,11 @@
-FROM golang:1.21.5 AS builder
+FROM golang:1.21.5
 WORKDIR /app
-COPY webapi/ .
-RUN go build -o app .
 
-FROM alpine:latest
-WORKDIR /root/
-COPY --from=builder /app/app .
+COPY webapi/ .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o /docker-gs-ping
+
+
 EXPOSE 8081
-CMD ["./app"]
+
+CMD ["/docker-gs-ping"]
