@@ -7,15 +7,13 @@ on:
     branches: [ "main" ]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
     - name: Run the Docker image
-      docker run --publish 8081:8081 sodekai/docker-gs-ping:latest
+      run: docker run --publish 8081:8081 sodekai/docker-gs-ping:latest
     - name: Test the container with curl
       run: |
         sleep 5 # Laisser le temps au conteneur de démarrer
