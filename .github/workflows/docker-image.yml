@@ -12,9 +12,21 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Run the Docker image
-      run: docker run --publish 8081:8081 sodekai/docker-gs-ping:latest
+      
+    # Build the Docker image locally
+    - name: Build the Docker image
+      run: docker build -t my-docker-app .
+
+    # Run the Docker container
+    - name: Run the Docker container
+      run: docker run --name test-container -d -p 8081:8081 my-docker-app
+
+    # Test the container with curl
     - name: Test the container with curl
       run: |
         sleep 5 # Laisser le temps au conteneur de démarrer
         curl -f http://localhost:8081/whoami || (echo "Test failed" && exit 1)
+
+    # Cleanup the container
+    - name: Cleanup
+      run: docker rm -f test-container
