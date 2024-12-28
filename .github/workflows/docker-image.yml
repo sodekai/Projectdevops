@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: Kubernetes CI/CD Pipeline
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -15,18 +15,41 @@ jobs:
       
     # Build the Docker image locally
     - name: Build the Docker image
-      run: docker build -t my-docker-app .
+      run: docker build -t my-app:latest .
 
-    # Run the Docker container
-    - name: Run the Docker container
-      run: docker run --name test-container -d -p 8081:8081 my-docker-app
+    # Load the image into Minikube
+    - name: Load image into Minikube
+      run: minikube image load my-app:latest
 
-    # Test the container with curl
-    - name: Test the container with curl
+    # Deploy to Development Environment
+    - name: Deploy to Development
       run: |
-        sleep 5 # Laisser le temps au conteneur de démarrer
-        curl -f http://localhost:8081/whoami || (echo "Test failed" && exit 1)
+        kubectl apply -f k8s/development.yaml
+        sleep 10 # Wait for the deployment to stabilize
+        kubectl rollout status deployment/my-app-deployment -n development
 
-    # Cleanup the container
-    - name: Cleanup
-      run: docker rm -f test-container
+    # Test the Development Deployment
+    - name: Test Development Deployment
+      run: |
+        DEVELOPMENT_IP=$(minikube service my-app-service -n development --url)
+        curl -f $DEVELOPMENT_IP/whoami || (echo "Development test failed" && exit 1)
+
+  deploy-to-production:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Deploy to Production Environment
+    - name: Deploy to Production
+      run: |
+        kubectl apply -f k8s/production.yaml
+        sleep 10 # Wait for the deployment to stabilize
+        kubectl rollout status deployment/my-app-deployment -n production
+
+    # Test the Production Deployment
+    - name: Test Production Deployment
+      run: |
+        PRODUCTION_IP=$(minikube service my-app-service -n production --url)
+        curl -f $PRODUCTION_IP/whoami || (echo "Production test failed" && exit 1)
