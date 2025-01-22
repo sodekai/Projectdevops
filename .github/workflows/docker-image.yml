@@ -26,14 +26,13 @@ jobs:
     # Deploy to Development Environment
     - name: Deploy to Development
       run: |
-        kubectl apply -f k8s/development.yaml
-        sleep 10 # Wait for the deployment to stabilize
-        kubectl rollout status deployment/my-app-deployment -n development
+        kubectl create deployment devlopment --image=my-app:latest
+        kubectl expose deployment devlopment --type=NodePort --port=8181
 
     # Test the Development Deployment
     - name: Test Development Deployment
       run: |
-        DEVELOPMENT_IP=$(minikube service my-app-service -n development --url)
+        DEVELOPMENT_IP=$(minikube service devlopment --url)
         curl -f $DEVELOPMENT_IP/whoami || (echo "Development test failed" && exit 1)
 
   deploy-to-production:
