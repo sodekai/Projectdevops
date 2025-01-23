@@ -32,9 +32,7 @@ jobs:
     - name: Test Development Deployment Kubernetes
       run: |
 
-        kubectl get nodes -o wide
-        kubectl get nodes -o wide | awk -v OFS='\t\t' '{print $6}'
-        
+        kubectl get pods
 
     # Test the Development Deployment
     - name: Test Development Deployment
