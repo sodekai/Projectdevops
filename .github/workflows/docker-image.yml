@@ -55,6 +55,7 @@ jobs:
     # Deploy to Production Environment
     - name: Deploy to Production
       run: |
+        minikube start
         kubectl apply -f k8s/production.yaml
         sleep 10 # Wait for the deployment to stabilize
         kubectl rollout status deployment/my-app-deployment -n production
