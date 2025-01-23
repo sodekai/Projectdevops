@@ -1,16 +1,16 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: development
 metadata:
-  name: example-deployment
+  name: development
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: example
+      app: development
   template:
     metadata:
       labels:
-        app: example
+        app: development
     spec:
       containers:
       - name: my-app
