@@ -31,14 +31,16 @@ jobs:
 
     - name: Test Development Deployment Kubernetes
       run: |
-        kubectl get pods
-        kubectl get nodes
-        kubectl get namespace
-        kubectl describe service
+
+        kubectl get nodes -o wide
+        kubectl get nodes -o wide | awk -v OFS='\t\t' '{print $6}'
+        
+
     # Test the Development Deployment
     - name: Test Development Deployment
       run: |
-        DEVELOPMENT_IP=$(minikube service my-app-service -n default --url )
+        SERVICE_NAME=$(kubectl get nodes -o wide | awk -v OFS='\t\t' '{print $6}')
+        DEVELOPMENT_IP=$(minikube service $SERVICE_NAME -n default --url )
         curl -f $DEVELOPMENT_IP/whoami || (echo "Development test failed" && exit 1)
   deploy-to-production:
     needs: build-and-test
