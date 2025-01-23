@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-deployment
+  namespace: production
+spec:
+  replicas: 3 # Plus de réplicas pour gérer plus de trafic
+  selector:
+    matchLabels:
+      app: production
+  template:
+    metadata:
+      labels:
+        app: production
+    spec:
+      containers:
+      - name: my-app-service
+        image: sodekai/docker-gs-ping:latest
+        ports:
+        - containerPort: 8081 # Port utilisé par l'application dans le conteneur
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-app-service
+  namespace: production
+  labels:
+    app: production
+spec:
+  selector:
+    app: production # Le service cible les pods de l'environnement production
+  type: NodePort # Utilisé pour exposer le service en externe via Minikube
+  ports:
+    - protocol: TCP
+      port: 80        # Port public accessible pour les utilisateurs
+      targetPort: 8081 # Correspond au port du conteneur
+      nodePort: 30002  # Port exposé sur le nœud (choisi ou laissé vide pour un port automatique)
