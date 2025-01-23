@@ -31,7 +31,7 @@ jobs:
     # Test the Development Deployment
     - name: Test Development Deployment
       run: |
-        DEVELOPMENT_IP=$(minikube service my-app-service -n development --url)
+        DEVELOPMENT_IP=$(minikube service my-app-service --url)
         curl -f $DEVELOPMENT_IP/whoami || (echo "Development test failed" && exit 1)
   deploy-to-production:
     needs: build-and-test
