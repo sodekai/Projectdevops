@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: development
+  name: my-app-service
 spec:
   replicas: 1
   selector:
