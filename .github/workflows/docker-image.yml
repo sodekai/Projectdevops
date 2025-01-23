@@ -34,6 +34,7 @@ jobs:
         kubectl get pods
         kubectl get nodes
         kubectl get namespace
+        kubectl describe service
     # Test the Development Deployment
     - name: Test Development Deployment
       run: |
