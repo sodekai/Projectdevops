@@ -37,8 +37,13 @@ jobs:
     # Test the Development Deployment
     - name: Test Development Deployment
       run: |
-        SERVICE_NAME=$(kubectl get svc -n default -l app=my-app -o jsonpath='{.items[0].metadata.name}')
-        DEVELOPMENT_IP=$(minikube service $SERVICE_NAME -n default --url )
+        SERVICE_NAME=$(kubectl get svc -n default -l app=development -o jsonpath='{.items[0].metadata.name}')
+        echo "Service Name: $SERVICE_NAME"
+    
+        DEVELOPMENT_IP=$(minikube service $SERVICE_NAME -n default --url)
+        echo "Service URL: $DEVELOPMENT_IP"
+        
+        # Test the endpoint
         curl -f $DEVELOPMENT_IP/whoami || (echo "Development test failed" && exit 1)
   deploy-to-production:
     needs: build-and-test
