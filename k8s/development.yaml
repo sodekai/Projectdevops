@@ -29,8 +29,9 @@ metadata:
 spec:
   selector:
     app: development
+  type: NodePort
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 8081
-  type: ClusterIP
+      port: 80        # Port the service listens on
+      targetPort: 8081 # Port the container listens on
+      nodePort: 30001  # Port exposed on the node (optional, Kubernetes will auto-assign if omitted)
