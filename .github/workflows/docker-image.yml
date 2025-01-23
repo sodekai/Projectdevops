@@ -26,12 +26,18 @@ jobs:
     # Deploy to Development Environment
     - name: Deploy to Development
       run: |
-        kubectl apply -f k8s/development.yaml
+        kubectl apply -f k8s/development.yaml -n default
         sleep 10 # Wait for the deployment to stabilize
+
+    - name: Test Development Deployment Kubernetes
+      run: |
+        kubectl get pods
+        kubectl get nodes
+        kubectl get namespace
     # Test the Development Deployment
     - name: Test Development Deployment
       run: |
-        DEVELOPMENT_IP=$(minikube service my-app-service --url)
+        DEVELOPMENT_IP=$(minikube service my-app-service -n default --url )
         curl -f $DEVELOPMENT_IP/whoami || (echo "Development test failed" && exit 1)
   deploy-to-production:
     needs: build-and-test
