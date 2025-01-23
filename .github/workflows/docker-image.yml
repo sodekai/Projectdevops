@@ -21,7 +21,7 @@ jobs:
     - name: Load image into Minikube
       run: |
         minikube start  
-        minikube image load my-app:latest
+        minikube image load sodekai/docker-gs-ping:latest
 
     # Deploy to Development Environment
     - name: Deploy to Development

@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: my-app-service
-        image: my-app:latest
+        image: sodekai/docker-gs-ping:latest
         ports:
         - containerPort: 8081
