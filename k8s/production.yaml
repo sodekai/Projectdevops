@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: my-app-deployment
-  namespace: production
+  namespace: default
 spec:
   replicas: 3 # Plus de réplicas pour gérer plus de trafic
   selector:
@@ -23,7 +23,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: my-app-service
-  namespace: production
+  namespace: default
   labels:
     app: production
 spec:
