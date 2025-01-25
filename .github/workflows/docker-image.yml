@@ -56,7 +56,7 @@ jobs:
       run: |
         minikube start
         kubectl apply -f k8s/production.yaml
-        sleep 10 # Wait for the deployment to stabilize
+        sleep 30 # Wait for the deployment to stabilize
         kubectl rollout status deployment/my-app-deployment -n default
 
     # Test the Production Deployment
