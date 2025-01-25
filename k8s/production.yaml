@@ -4,7 +4,7 @@ metadata:
   name: my-app-deployment
   namespace: default
 spec:
-  replicas: 1 # Plus de réplicas pour gérer plus de trafic
+  replicas: 1 
   selector:
     matchLabels:
       app: production
