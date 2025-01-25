@@ -57,7 +57,8 @@ jobs:
       run: |
         minikube start
         kubectl apply -f k8s/production.yaml -n default
-        sleep 10 # Wait for the deployment to stabilize
+        sleep 20 # Wait for the deployment to stabilize
+        kubectl rollout status deployment/my-app-deployment -n default
 
     # Install Prometheus and Grafana
     - name: Install Prometheus and Grafana
