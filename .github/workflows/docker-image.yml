@@ -21,16 +21,18 @@ jobs:
     - name: Load image into Minikube
       run: |
         minikube start  
-        minikube image load my-app:latest
+        minikube image load sodekai/docker-gs-ping:latest
 
     # Deploy to Development Environment
     - name: Deploy to Development
       run: |
         kubectl apply -f k8s/development.yaml -n default
-        sleep 20 # Wait for the deployment to stabilize
+        sleep 10 # Wait for the deployment to stabilize
 
     - name: Test Development Deployment Kubernetes
-      run: kubectl get pods
+      run: |
+
+        kubectl get pods
 
     # Test the Development Deployment
     - name: Test Development Deployment
@@ -43,7 +45,8 @@ jobs:
         
         # Test the endpoint
         curl -f $DEVELOPMENT_IP/whoami || (echo "Development test failed" && exit 1)
-
+  
+  
   deploy-to-production:
     needs: build-and-test
     runs-on: ubuntu-latest
@@ -58,32 +61,27 @@ jobs:
         kubectl apply -f k8s/production.yaml
         sleep 10 # Wait for the deployment to stabilize
         kubectl rollout status deployment/my-app-deployment -n default
-
     # Test the Production Deployment
-    - name: Test Production Deployment
-      run: |
-        kubectl get pods
-        kubectl get nodes
-
-  setup-logs-management:
-    needs: deploy-to-production
-    runs-on: ubuntu-latest
-
-    steps:
     - uses: actions/checkout@v4
 
-    # Install Grafana Loki for Logs Management
-    - name: Install Grafana Loki
+    # Install Prometheus and Grafana
+    - name: Install Prometheus and Grafana
       run: |
+        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
         helm repo add grafana https://grafana.github.io/helm-charts
         helm repo update
-        helm install loki grafana/loki-stack -n logging --create-namespace
-
-        # Wait for Loki and Promtail to stabilize
+        
+        # Install Prometheus
+        helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
+        
+        # Install Grafana
+        helm install grafana grafana/grafana -n monitoring
+        
+        # Wait for services to start
         sleep 60
 
-    # Configure Loki as a Grafana Data Source
-    - name: Configure Grafana Loki Data Source
+    # Configure Prometheus as a Grafana data source
+    - name: Configure Grafana
       run: |
         # Get Grafana admin password
         GRAFANA_PASSWORD=$(kubectl get secret -n monitoring grafana -o jsonpath='{.data.admin-password}' | base64 --decode)
@@ -93,27 +91,4 @@ jobs:
         
         echo "Grafana URL: $GRAFANA_URL"
         echo "Grafana Admin Password: $GRAFANA_PASSWORD"
-
-        # Configure Loki as a data source via Grafana API
-        curl -X POST -H "Content-Type: application/json" \
-          -H "Authorization: Bearer $GRAFANA_PASSWORD" \
-          -d '{
-                "name": "Loki",
-                "type": "loki",
-                "url": "http://loki.logging:3100",
-                "access": "proxy",
-                "isDefault": false
-              }' \
-          $GRAFANA_URL/api/datasources || echo "Grafana API configuration failed. You may need to configure manually."
-
-    # Query Logs for Errors in the Production Namespace
-    - name: Query Logs for Errors in Production
-      run: |
-        # Get Grafana Loki Query URL
-        LOKI_QUERY="http://loki.logging:3100/loki/api/v1/query_range?query={namespace=\"production\"}&regexp=.*error.*"
-
-        # Execute the query
-        curl -G $LOKI_QUERY -o error_logs.json
         
-        # Display the result
-        cat error_logs.json || echo "No errors found in production logs."
