@@ -23,23 +23,30 @@ jobs:
         minikube start  
         minikube image load sodekai/docker-gs-ping:latest
 
+    # Create namespaces
+    - name: Create Namespaces
+      run: |
+        kubectl create namespace development || true
+        kubectl create namespace production || true
+        kubectl create namespace monitoring || true
+
     # Deploy to Development Environment
     - name: Deploy to Development
       run: |
-        kubectl apply -f k8s/development.yaml -n default
+        kubectl apply -f k8s/development.yaml -n development
         sleep 10 # Wait for the deployment to stabilize
 
     - name: Test Development Deployment Kubernetes
       run: |
-        kubectl get pods -n default
+        kubectl get pods -n development
 
     # Test the Development Deployment
     - name: Test Development Deployment
       run: |
-        SERVICE_NAME=$(kubectl get svc -n default -l app=development -o jsonpath='{.items[0].metadata.name}')
+        SERVICE_NAME=$(kubectl get svc -n development -l app=development -o jsonpath='{.items[0].metadata.name}')
         echo "Service Name: $SERVICE_NAME"
     
-        DEVELOPMENT_IP=$(minikube service $SERVICE_NAME -n default --url)
+        DEVELOPMENT_IP=$(minikube service $SERVICE_NAME -n development --url)
         echo "Service URL: $DEVELOPMENT_IP"
         
         # Test the endpoint
@@ -56,8 +63,9 @@ jobs:
     - name: Deploy to Production
       run: |
         minikube start
-        kubectl apply -f k8s/production.yaml -n default
+        kubectl apply -f k8s/production.yaml -n production
         sleep 20 # Wait for the deployment to stabilize
+
     # Install Prometheus and Grafana
     - name: Install Prometheus and Grafana
       run: |
@@ -163,7 +171,7 @@ jobs:
         kind: Pod
         metadata:
           name: trigger-email-alert
-          namespace: default
+          namespace: production
         spec:
           containers:
           - name: busybox
@@ -176,6 +184,13 @@ jobs:
       run: |
         kubectl get prometheusrules -n monitoring
         kubectl describe configmap alertmanager-config -n monitoring
+
+    # Install Grafana Loki
+    - name: Install Grafana Loki
+      run: |
+        helm repo add grafana https://grafana.github.io/helm-charts
+        helm repo update
+        helm install loki grafana/loki-stack -n monitoring --create-namespace
 
   configure-grafana:
     needs: deploy-to-production
@@ -191,3 +206,37 @@ jobs:
         echo "Configuring Grafana dashboards and alerts..."
         # Example: Create a dashboard using Grafana API
         # curl -X POST -H "Content-Type: application/json" -d @dashboard.json http://admin:$GRAFANA_PASSWORD@$GRAFANA_URL/api/dashboards/db
+
+    # Configure Loki datasource and create query
+    - name: Configure Loki Datasource
+      run: |
+        # Add Loki as a datasource in Grafana
+        curl -X POST -H "Content-Type: application/json" -d '{
+          "name": "Loki",
+          "type": "loki",
+          "url": "http://loki.monitoring.svc.cluster.local:3100",
+          "access": "proxy",
+          "basicAuth": false
+        }' http://admin:$GRAFANA_PASSWORD@$GRAFANA_URL/api/datasources
+
+    - name: Create Error Logs Query
+      run: |
+        # Create a query to display log lines containing the word 'error' for the 'production' namespace
+        curl -X POST -H "Content-Type: application/json" -d '{
+          "dashboard": {
+            "id": null,
+            "title": "Error Logs",
+            "panels": [
+              {
+                "type": "logs",
+                "title": "Error Logs",
+                "targets": [
+                  {
+                    "expr": "{namespace=\"production\"} |= \"error\""
+                  }
+                ]
+              }
+            ]
+          },
+          "overwrite": false
+        }' http://admin:$GRAFANA_PASSWORD@$GRAFANA_URL/api/dashboards/db
