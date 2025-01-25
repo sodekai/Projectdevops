@@ -31,7 +31,7 @@ jobs:
 
     - name: Test Development Deployment Kubernetes
       run: |
-        kubectl get pods
+        kubectl get pods -n default
 
     # Test the Development Deployment
     - name: Test Development Deployment
@@ -56,7 +56,7 @@ jobs:
     - name: Deploy to Production
       run: |
         minikube start
-        kubectl apply -f k8s/production.yaml
+        kubectl apply -f k8s/production.yaml -n default
         sleep 10 # Wait for the deployment to stabilize
         kubectl rollout status deployment/my-app-deployment -n default
 
@@ -87,3 +87,103 @@ jobs:
         
         echo "Grafana URL: $GRAFANA_URL"
         echo "Grafana Admin Password: $GRAFANA_PASSWORD"
+
+    # Configure Alert Manager and set up alerts
+    - name: Configure Alert Manager
+      run: |
+        cat <<EOF | kubectl apply -f -
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: alertmanager-config
+          namespace: monitoring
+        data:
+          alertmanager.yml: |
+            global:
+              smtp_smarthost: 'smtp.example.com:587'
+              smtp_from: 'alertmanager@example.com'
+              smtp_auth_username: 'alertmanager@example.com'
+              smtp_auth_password: 'password'
+            route:
+              receiver: 'email'
+            receivers:
+            - name: 'email'
+              email_configs:
+              - to: 'lazhar.hamel@efrei.fr'
+                send_resolved: true
+                subject: 'CRMM: Alert - {{ .CommonLabels.alertname }}'
+                text: '{{ .CommonAnnotations.summary }}'
+        EOF
+
+    - name: Set up Pod non-running alert
+      run: |
+        cat <<EOF | kubectl apply -f -
+        apiVersion: monitoring.coreos.com/v1
+        kind: PrometheusRule
+        metadata:
+          name: pod-alerts
+          namespace: monitoring
+        spec:
+          groups:
+          - name: pod.rules
+            rules:
+            - alert: PodNotRunning
+              expr: kube_pod_status_phase{phase="Failed"} > 0
+              for: 5m
+              labels:
+                severity: critical
+              annotations:
+                summary: "Pod has been in a non-running state for longer than 5 minutes."
+        EOF
+
+    - name: Set up additional alert
+      run: |
+        cat <<EOF | kubectl apply -f -
+        apiVersion: monitoring.coreos.com/v1
+        kind: PrometheusRule
+        metadata:
+          name: additional-alerts
+          namespace: monitoring
+        spec:
+          groups:
+          - name: additional.rules
+            rules:
+            - alert: HighMemoryUsage
+              expr: container_memory_usage_bytes > 500000000
+              for: 5m
+              labels:
+                severity: warning
+              annotations:
+                summary: "High memory usage detected in one of the containers."
+        EOF
+
+    # Trigger email alert
+    - name: Trigger Email Alert
+      run: |
+        kubectl apply -f - <<EOF
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: trigger-email-alert
+          namespace: default
+        spec:
+          containers:
+          - name: busybox
+            image: busybox
+            command: ["sh", "-c", "sleep 600"]
+        EOF
+
+  configure-grafana:
+    needs: deploy-to-production
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Configure Grafana dashboards and alerts
+    - name: Configure Grafana Dashboards
+      run: |
+        # Add your Grafana configuration steps here
+        echo "Configuring Grafana dashboards and alerts..."
+        # Example: Create a dashboard using Grafana API
+        # curl -X POST -H "Content-Type: application/json" -d @dashboard.json http://admin:$GRAFANA_PASSWORD@$GRAFANA_URL/api/dashboards/db
