@@ -100,7 +100,7 @@ jobs:
         data:
           alertmanager.yml: |
             global:
-              smtp_smarthost: 'smtp.example.com:587'
+              smtp_smarthost: 'smtp.gmail.com:587'
               smtp_from: 'd75045722@gmail.com'
               smtp_auth_username: 'd75045722@gmail.com'
               smtp_auth_password: 'devops1234'
@@ -109,7 +109,7 @@ jobs:
             receivers:
             - name: 'email'
               email_configs:
-              - to: 'lazhar.hamel@efrei.fr'
+              - to: 'clement.luc@efrei.net'
                 send_resolved: true
                 subject: 'CRMM: Alert - {{ .CommonLabels.alertname }}'
                 text: '{{ .CommonAnnotations.summary }}'
