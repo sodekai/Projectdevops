@@ -198,5 +198,5 @@ jobs:
     # Verify if alerts are set up correctly
     - name: Verify Alerts
       run: |
-        kubectl get prometheusrules -n monitoring
-        kubectl describe configmap alertmanager-config -n monitoring
+        kubectl get prometheusrules -n default
+        kubectl describe configmap alertmanager-config -n default
