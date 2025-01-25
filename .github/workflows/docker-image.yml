@@ -58,6 +58,8 @@ jobs:
         minikube start
         kubectl apply -f k8s/production.yaml -n default
         sleep 10 # Wait for the deployment to stabilize
+        kubectl rollout status deployment/my-app-deployment -n default
+
     # Install Prometheus and Grafana
     - name: Install Prometheus and Grafana
       run: |
@@ -99,9 +101,9 @@ jobs:
           alertmanager.yml: |
             global:
               smtp_smarthost: 'smtp.example.com:587'
-              smtp_from: 'alertmanager@example.com'
-              smtp_auth_username: 'alertmanager@example.com'
-              smtp_auth_password: 'password'
+              smtp_from: 'd75045722@gmail.com'
+              smtp_auth_username: 'd75045722@gmail.com'
+              smtp_auth_password: 'devops1234'
             route:
               receiver: 'email'
             receivers:
@@ -185,3 +187,16 @@ jobs:
         echo "Configuring Grafana dashboards and alerts..."
         # Example: Create a dashboard using Grafana API
         # curl -X POST -H "Content-Type: application/json" -d @dashboard.json http://admin:$GRAFANA_PASSWORD@$GRAFANA_URL/api/dashboards/db
+
+  check-alerts:
+    needs: deploy-to-production
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Verify if alerts are set up correctly
+    - name: Verify Alerts
+      run: |
+        kubectl get prometheusrules -n monitoring
+        kubectl describe configmap alertmanager-config -n monitoring
