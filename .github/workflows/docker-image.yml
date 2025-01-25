@@ -27,7 +27,7 @@ jobs:
     - name: Deploy to Development
       run: |
         kubectl apply -f k8s/development.yaml -n default
-        sleep 10 # Wait for the deployment to stabilize
+        sleep 20 # Wait for the deployment to stabilize
 
     - name: Test Development Deployment Kubernetes
       run: kubectl get pods
@@ -56,7 +56,7 @@ jobs:
       run: |
         minikube start
         kubectl apply -f k8s/production.yaml
-        sleep 30 # Wait for the deployment to stabilize
+        sleep 10 # Wait for the deployment to stabilize
         kubectl rollout status deployment/my-app-deployment -n default
 
     # Test the Production Deployment
