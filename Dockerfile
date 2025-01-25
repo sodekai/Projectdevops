@@ -5,6 +5,8 @@ COPY webapi/ .
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /docker-gs-ping
 
+# Add environment variable for team name
+ENV TEAM_NAME="YourTeamName"
 
 EXPOSE 8081
 
