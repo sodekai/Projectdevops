@@ -63,5 +63,4 @@ jobs:
     - name: Test Production Deployment
       run: |
         kubectl get pods
-        echo("\n ------------------------------------------ \n")
         kubectl get nodes
