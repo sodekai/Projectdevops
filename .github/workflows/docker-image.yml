@@ -70,7 +70,6 @@ jobs:
     # Deploy to Production Environment
     - name: Deploy to Production
       run: |
-        
         kubectl apply -f k8s/production.yaml -n production
         sleep 20 # Wait for the deployment to stabilize
 
@@ -102,32 +101,10 @@ jobs:
         echo "Grafana URL: $GRAFANA_URL"
         echo "Grafana Admin Password: $GRAFANA_PASSWORD"
 
-    # Configure Alert Manager and set up alerts
-    - name: Configure Alert Manager
+    # Apply Alert Manager configuration
+    - name: Apply Alert Manager Configuration
       run: |
-        cat <<EOF | kubectl apply -f -
-        apiVersion: v1
-        kind: ConfigMap
-        metadata:
-          name: alertmanager-config
-          namespace: monitoring
-        data:
-          alertmanager.yml: |
-            global:
-              smtp_smarthost: 'smtp.gmail.com:587'
-              smtp_from: 'd75045722@gmail.com'
-              smtp_auth_username: 'd75045722@gmail.com'
-              smtp_auth_password: 'devops1234'
-            route:
-              receiver: 'email'
-            receivers:
-            - name: 'email'
-              email_configs:
-              - to: 'clement.luc@efrei.net'
-                send_resolved: true
-                subject: 'CRMM: Alert - {{ .CommonLabels.alertname }}'
-                text: '{{ .CommonAnnotations.summary }}'
-        EOF
+        kubectl apply -f k8s/alertmanager-config.yaml
 
     - name: Set up Pod non-running alert
       run: |
@@ -141,13 +118,13 @@ jobs:
           groups:
           - name: pod.rules
             rules:
-            - alert: PodNotRunning
-              expr: kube_pod_status_phase{phase="Failed"} > 0
-              for: 5m
+            - alert: PodRunningTooLong
+              expr: kube_pod_status_phase{phase="Running"} > 0
+              for: 2s
               labels:
                 severity: critical
               annotations:
-                summary: "Pod has been in a non-running state for longer than 5 minutes."
+                summary: "Pod has been running for longer than 2 seconds."
         EOF
 
     - name: Set up additional alert
@@ -186,6 +163,7 @@ jobs:
             image: busybox
             command: ["sh", "-c", "sleep 600"]
         EOF
+        sleep 20 # Ensure the alarm triggers
 
     # Verify if alerts are set up correctly
     - name: Verify Alerts
