@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
     - uses: actions/checkout@v4
@@ -54,7 +54,7 @@ jobs:
   
   deploy-to-production:
     needs: build-and-test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
     - uses: actions/checkout@v4
@@ -178,6 +178,13 @@ jobs:
         helm repo update
         helm install loki grafana/loki-stack -n monitoring --create-namespace
 
+  configure-grafana:
+    needs: deploy-to-production
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
     # Configure Grafana dashboards and alerts
     - name: Configure Grafana Dashboards
       run: |
@@ -196,7 +203,7 @@ jobs:
           "url": "http://loki.monitoring.svc.cluster.local:3100",
           "access": "proxy",
           "basicAuth": false
-        }' http://admin:$GRAFANA_PASSWORD@$GRAFANA_URL/api/datasources
+        }' "$GRAFANA_URL/api/datasources"
 
     - name: Create Error Logs Query
       run: |
@@ -218,4 +225,4 @@ jobs:
             ]
           },
           "overwrite": false
-        }' http://admin:$GRAFANA_PASSWORD@$GRAFANA_URL/api/dashboards/db
+        }' "$GRAFANA_URL/api/dashboards/db"
