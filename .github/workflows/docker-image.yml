@@ -64,6 +64,7 @@ jobs:
         kubectl create namespace development || true
         kubectl create namespace production || true
         kubectl create namespace monitoring || true
+        kubectl get namespaces
 
     # Deploy to Production Environment
     - name: Deploy to Production
