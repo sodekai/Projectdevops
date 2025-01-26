@@ -59,6 +59,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Create Namespaces
+      run: |
+        kubectl create namespace development || true
+        kubectl create namespace production || true
+        kubectl create namespace monitoring || true
+
     # Deploy to Production Environment
     - name: Deploy to Production
       run: |
