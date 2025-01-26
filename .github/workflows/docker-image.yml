@@ -61,6 +61,7 @@ jobs:
 
     - name: Create Namespaces
       run: |
+        minikube start
         kubectl create namespace development || true
         kubectl create namespace production || true
         kubectl create namespace monitoring || true
@@ -69,7 +70,7 @@ jobs:
     # Deploy to Production Environment
     - name: Deploy to Production
       run: |
-        minikube start
+        
         kubectl apply -f k8s/production.yaml -n production
         sleep 20 # Wait for the deployment to stabilize
 
