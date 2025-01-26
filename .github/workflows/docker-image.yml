@@ -178,13 +178,6 @@ jobs:
         helm repo update
         helm install loki grafana/loki-stack -n monitoring --create-namespace
 
-  configure-grafana:
-    needs: deploy-to-production
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
     # Configure Grafana dashboards and alerts
     - name: Configure Grafana Dashboards
       run: |
