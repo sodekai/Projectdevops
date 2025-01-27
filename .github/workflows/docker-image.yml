@@ -33,6 +33,7 @@ jobs:
     # Deploy to Development Environment
     - name: Deploy to Development
       run: |
+        minikube start
         kubectl apply -f k8s/development.yaml -n development --validate=false
         sleep 10 # Wait for the deployment to stabilize
 
@@ -62,6 +63,7 @@ jobs:
     # Deploy to Production Environment
     - name: Deploy to Production
       run: |
+        minikube start
         kubectl apply -f k8s/production.yaml -n production --validate=false
         sleep 20 # Wait for the deployment to stabilize
 
