@@ -14,6 +14,5 @@ spec:
     runAsUser: 1000
     runAsGroup: 2000
     fsGroup: 2000
-  alertmanagerConfigNamespaceSelector: {monitoring: "true"}
   alertmanagerConfigSelector: {k8s}
   configSecret: alertmanager-config
