@@ -83,20 +83,20 @@ jobs:
         # Wait for services to start
         sleep 60
 
-    # Apply Alert Manager configuration
-    - name: Apply Alert Manager Configuration
-      run: |
-        kubectl apply -f k8s/alertmanager-config.yaml --validate=false
-
-    - name: Apply Prometheus Rules
-      run: |
-        kubectl apply -f k8s/prometheus-rules.yaml -n monitoring --validate=false
-
     # Upgrade Helm chart to add a port for Alert Manager
     - name: Upgrade Alert Manager
       run: |
         helm upgrade prometheus prometheus-community/kube-prometheus-stack -n monitoring --set alertmanager.service.nodePort=30040
 
+    # Apply Alert Manager configuration
+    - name: Apply Alert Manager Configuration
+      run: |
+        kubectl apply -f k8s/alertmanager-config.yaml -n monitoring
+
+    - name: Apply Prometheus Rules
+      run: |
+        kubectl apply -f k8s/prometheus-rules.yaml -n monitoring
+        
     # Apply dev-app-monitor to use a Prometheus watcher
     - name: Apply Dev App Monitor and Loki
       run: |
