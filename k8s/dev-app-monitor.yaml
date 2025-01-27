@@ -9,7 +9,7 @@ spec:
       app.kubernetes.io/name: lb-go-app
   namespaceSelector:
     matchNames:
-      - dev
+      - Development
   endpoints:
     - port: http
       path: /metrics
