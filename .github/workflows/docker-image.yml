@@ -88,6 +88,10 @@ jobs:
       run: |
         kubectl apply -f k8s/alertmanager-config.yaml --validate=false
 
+    - name: Apply Prometheus Rules
+      run: |
+        kubectl apply -f k8s/prometheus-rules.yaml -n monitoring --validate=false
+
     # Upgrade Helm chart to add a port for Alert Manager
     - name: Upgrade Alert Manager
       run: |
