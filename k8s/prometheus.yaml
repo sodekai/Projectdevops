@@ -1,0 +1,8 @@
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - 'alertmanager.monitoring.svc:9093'  # Update with the correct Alertmanager service name and port
+
+rule_files:
+  - /etc/prometheus/rules/prometheus-rules.yaml  # Ensure this path points to your PrometheusRule file

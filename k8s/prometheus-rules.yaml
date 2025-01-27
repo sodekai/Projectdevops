@@ -3,6 +3,10 @@ kind: PrometheusRule
 metadata:
   name: production-alerts
   namespace: monitoring
+  annotations:
+    alertmanager.io/alert: "alertmanager"
+  labels:
+    alertmanager: "alertmanager"
 spec:
   groups:
   - name: production-alerts

@@ -62,45 +62,42 @@ jobs:
       run: |
         kubectl apply -f k8s/production.yaml -n production --validate=false
         sleep 20 # Wait for the deployment to stabilize
-
-    # Install Prometheus and Grafana
-    - name: Install Prometheus and Grafana
+    
+    # Install or Upgrade Prometheus and Grafana
+    - name: Install or Upgrade Prometheus and Grafana
       run: |
         helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
         helm repo add grafana https://grafana.github.io/helm-charts
         helm repo update
         
-        # Install Prometheus
-        helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring --create-namespace --set prometheus.service.nodePort=30090
+        # Install or Upgrade Prometheus
+        helm upgrade --install prometheus prometheus-community/kube-prometheus-stack -n monitoring --create-namespace --set prometheus.service.nodePort=30090
         
-        # Install Grafana
-        helm install grafana grafana/grafana -n monitoring --set service.nodePort=30030
-        # Install Loki
-        helm repo add grafana https://grafana.github.io/helm-charts
-        helm repo update
-        helm install loki grafana/loki-stack -n monitoring --set loki.service.nodePort=31000
+        # Install or Upgrade Grafana
+        helm upgrade --install grafana grafana/grafana -n monitoring --set service.nodePort=30030
         
         # Wait for services to start
         sleep 60
 
-    # Upgrade Helm chart to add a port for Alert Manager
-    - name: Upgrade Alert Manager
+    # Apply Prometheus Configuration
+    - name: Apply Prometheus Configuration
       run: |
-        helm upgrade prometheus prometheus-community/kube-prometheus-stack -n monitoring --set alertmanager.service.nodePort=30040
-
+        kubectl apply -f k8s/prometheus-configmap.yaml -n monitoring
+        kubectl apply -f k8s/prometheus.yaml -n monitoring
+      
     # Apply Alert Manager configuration
     - name: Apply Alert Manager Configuration
       run: |
-        kubectl apply -f k8s/alertmanager-config.yaml -n monitoring
+        kubectl apply -f k8s/alertmanager.yaml -n monitoring 
 
-    - name: Apply Prometheus Rules
+    # Upgrade Helm chart to add a port for Alert Manager
+    - name: Upgrade Alert Manager
       run: |
-        kubectl apply -f k8s/prometheus-rules.yaml -n monitoring
-        
+        helm upgrade --install prometheus prometheus-community/kube-prometheus-stack -n monitoring --set alertmanager.service.nodePort=30040
+
     # Apply dev-app-monitor to use a Prometheus watcher
-    - name: Apply Dev App Monitor and Loki
+    - name: Apply Dev App Monitor
       run: |
         kubectl apply -f k8s/dev-app-monitor.yaml -n monitoring --validate=false
-        kubectl apply -f k8s/loki-config.yaml -n monitoring --validate=false
 
 
