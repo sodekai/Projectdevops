@@ -8,7 +8,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
@@ -54,18 +54,10 @@ jobs:
   
   deploy-to-production:
     needs: build-and-test
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Create Namespaces
-      run: |
-        minikube start
-        kubectl create namespace development || true
-        kubectl create namespace production || true
-        kubectl create namespace monitoring || true
-        kubectl get namespaces
 
     # Deploy to Production Environment
     - name: Deploy to Production
@@ -81,148 +73,20 @@ jobs:
         helm repo update
         
         # Install Prometheus
-        helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
+        helm install prometheus prometheus-community/kube-prometheus-stack -n monitoring --create-namespace --set prometheus.service.nodePort=30090
         
         # Install Grafana
-        helm install grafana grafana/grafana -n monitoring
+        helm install grafana grafana/grafana -n monitoring --set service.nodePort=30030
         
         # Wait for services to start
         sleep 60
-
-    # Configure Prometheus as a Grafana data source
-    - name: Configure Grafana
-      run: |
-        # Get Grafana admin password
-        GRAFANA_PASSWORD=$(kubectl get secret -n monitoring grafana -o jsonpath='{.data.admin-password}' | base64 --decode)
-        
-        # Get Grafana service URL
-        GRAFANA_URL=$(minikube service grafana -n monitoring --url)
-        
-        echo "Grafana URL: $GRAFANA_URL"
-        echo "Grafana Admin Password: $GRAFANA_PASSWORD"
 
     # Apply Alert Manager configuration
     - name: Apply Alert Manager Configuration
       run: |
         kubectl apply -f k8s/alertmanager-config.yaml
 
-    - name: Set up Pod non-running alert
+    # Upgrade Helm chart to add a port for Alert Manager
+    - name: Upgrade Alert Manager
       run: |
-        cat <<EOF | kubectl apply -f -
-        apiVersion: monitoring.coreos.com/v1
-        kind: PrometheusRule
-        metadata:
-          name: pod-alerts
-          namespace: monitoring
-        spec:
-          groups:
-          - name: pod.rules
-            rules:
-            - alert: PodRunningTooLong
-              expr: kube_pod_status_phase{phase="Running"} > 0
-              for: 2s
-              labels:
-                severity: critical
-              annotations:
-                summary: "Pod has been running for longer than 2 seconds."
-        EOF
-
-    - name: Set up additional alert
-      run: |
-        cat <<EOF | kubectl apply -f -
-        apiVersion: monitoring.coreos.com/v1
-        kind: PrometheusRule
-        metadata:
-          name: additional-alerts
-          namespace: monitoring
-        spec:
-          groups:
-          - name: additional.rules
-            rules:
-            - alert: HighMemoryUsage
-              expr: container_memory_usage_bytes > 500000000
-              for: 5m
-              labels:
-                severity: warning
-              annotations:
-                summary: "High memory usage detected in one of the containers."
-        EOF
-
-    # Trigger email alert
-    - name: Trigger Email Alert
-      run: |
-        kubectl apply -f - <<EOF
-        apiVersion: v1
-        kind: Pod
-        metadata:
-          name: trigger-email-alert
-          namespace: production
-        spec:
-          containers:
-          - name: busybox
-            image: busybox
-            command: ["sh", "-c", "sleep 600"]
-        EOF
-        sleep 20 # Ensure the alarm triggers
-
-    # Verify if alerts are set up correctly
-    - name: Verify Alerts
-      run: |
-        kubectl get prometheusrules -n monitoring
-        kubectl describe configmap alertmanager-config -n monitoring
-
-    # Install Grafana Loki
-    - name: Install Grafana Loki
-      run: |
-        helm repo add grafana https://grafana.github.io/helm-charts
-        helm repo update
-        helm install loki grafana/loki-stack -n monitoring --create-namespace
-
-  configure-grafana:
-    needs: deploy-to-production
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v4
-
-    # Configure Grafana dashboards and alerts
-    - name: Configure Grafana Dashboards
-      run: |
-        # Add your Grafana configuration steps here
-        echo "Configuring Grafana dashboards and alerts..."
-        # Example: Create a dashboard using Grafana API
-        # curl -X POST -H "Content-Type: application/json" -d @dashboard.json http://admin:$GRAFANA_PASSWORD@$GRAFANA_URL/api/dashboards/db
-
-    # Configure Loki datasource and create query
-    - name: Configure Loki Datasource
-      run: |
-        # Add Loki as a datasource in Grafana
-        curl -X POST -H "Content-Type: application/json" -d '{
-          "name": "Loki",
-          "type": "loki",
-          "url": "http://loki.monitoring.svc.cluster.local:3100",
-          "access": "proxy",
-          "basicAuth": false
-        }' "$GRAFANA_URL/api/datasources"
-
-    - name: Create Error Logs Query
-      run: |
-        # Create a query to display log lines containing the word 'error' for the 'production' namespace
-        curl -X POST -H "Content-Type: application/json" -d '{
-          "dashboard": {
-            "id": null,
-            "title": "Error Logs",
-            "panels": [
-              {
-                "type": "logs",
-                "title": "Error Logs",
-                "targets": [
-                  {
-                    "expr": "{namespace=\"production\"} |= \"error\""
-                  }
-                ]
-              }
-            ]
-          },
-          "overwrite": false
-        }' "$GRAFANA_URL/api/dashboards/db"
+        helm upgrade prometheus prometheus-community/kube-prometheus-stack -n monitoring --set alertmanager.service.nodePort=30040
