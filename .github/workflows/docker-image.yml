@@ -33,7 +33,6 @@ jobs:
     # Deploy to Development Environment
     - name: Deploy to Development
       run: |
-        minikube start
         minikube image load sodekai/docker-gs-ping:latest
         kubectl apply -f k8s/development.yaml -n development --validate=false
         sleep 10 # Wait for the deployment to stabilize
