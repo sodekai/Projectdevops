@@ -94,8 +94,9 @@ jobs:
         helm upgrade prometheus prometheus-community/kube-prometheus-stack -n monitoring --set alertmanager.service.nodePort=30040
 
     # Apply dev-app-monitor to use a Prometheus watcher
-    - name: Apply Dev App Monitor
+    - name: Apply Dev App Monitor and Loki
       run: |
         kubectl apply -f k8s/dev-app-monitor.yaml -n monitoring --validate=false
+        kubectl apply -f k8s/loki-config.yaml -n monitoring --validate=false
 
 
