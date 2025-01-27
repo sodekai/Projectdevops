@@ -65,9 +65,16 @@ jobs:
         kubectl apply -f k8s/production.yaml -n production
         sleep 20 # Wait for the deployment to stabilize
 
+            # Apply dev-app-monitor to use a Prometheus watcher
+    - name: Apply Dev App Monitor
+      run: |
+        kubectl apply -f k8s/dev-app-monitor.yaml -n monitoring
+
+        
     # Install Prometheus and Grafana
     - name: Install Prometheus and Grafana
       run: |
+
         helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
         helm repo add grafana https://grafana.github.io/helm-charts
         helm repo update
@@ -90,3 +97,5 @@ jobs:
     - name: Upgrade Alert Manager
       run: |
         helm upgrade prometheus prometheus-community/kube-prometheus-stack -n monitoring --set alertmanager.service.nodePort=30040
+
+
