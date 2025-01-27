@@ -60,16 +60,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Create Namespaces
       run: |
+        minikube start
         kubectl create namespace development || true
         kubectl create namespace production || true
         kubectl create namespace monitoring || true
     # Deploy to Production Environment
     - name: Deploy to Production
       run: |
-        minikube start
+        
         kubectl apply -f k8s/production.yaml -n production --validate=false
         sleep 20 # Wait for the deployment to stabilize
 
