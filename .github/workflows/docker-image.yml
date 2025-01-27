@@ -12,10 +12,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-      
-    # Build the Docker image locally
-    - name: Build the Docker image
-      run: docker build -t my-app:latest .
 
     # Load the image into Minikube
     - name: Load image into Minikube
